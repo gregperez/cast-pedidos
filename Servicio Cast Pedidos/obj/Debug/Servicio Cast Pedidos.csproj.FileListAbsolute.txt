@@ -1,0 +1,17 @@
+c:\users\gperez\documents\visual studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\Servicio Cast Pedidos.exe.config
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\Servicio Cast Pedidos.exe
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\Servicio Cast Pedidos.pdb
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\Oracle.ManagedDataAccess.dll
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\SAPBusinessOneSDK.dll
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio Cast Pedidos.exe
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio Cast Pedidos.pdb
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio_Cast_Pedidos.ProjectInstaller.resources
+C:\Users\gperez\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio Cast Pedidos.csproj.GenerateResource.Cache
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\Servicio Cast Pedidos.exe.config
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio Cast Pedidos.exe
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio Cast Pedidos.pdb
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\Servicio Cast Pedidos.exe
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\bin\Debug\Servicio Cast Pedidos.pdb
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio Cast Pedidos.csprojResolveAssemblyReference.cache
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio_Cast_Pedidos.ProjectInstaller.resources
+C:\Users\Greg\Documents\Visual Studio 2015\Projects\Servicio Cast Pedidos\Servicio Cast Pedidos\obj\Debug\Servicio Cast Pedidos.csproj.GenerateResource.Cache
