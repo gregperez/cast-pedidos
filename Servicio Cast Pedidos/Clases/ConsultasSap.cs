@@ -20,12 +20,12 @@ namespace Servicio_Cast_Pedidos.Clases
         /// 
         /// </summary>
         /// <returns></returns>
-        public static string GetLineaCredito(string valor)
+        public static string GetLineaCredito(string CardCode)
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" SELECT IFNULL(T0.\"CreditLine\", 0) AS \"CreditLine\" FROM OCRD T0 ");
-            m_sSQL.AppendFormat(" WHERE T0.\"CardCode\" = '{0}' ", valor);
+            m_sSQL.Append(" SELECT T0.\"CreditLine\" FROM CAST_PEDIDO_LIMITE_CREDITO T0 ");
+            m_sSQL.AppendFormat(" WHERE T0.\"CardCode\" = '{0}' ", CardCode);
 
             return m_sSQL.ToString();
         }
@@ -34,26 +34,13 @@ namespace Servicio_Cast_Pedidos.Clases
         /// 
         /// </summary>
         /// <returns></returns>
-        public static string GetItemStock(string valor)
+        public static string GetItemStock(string ItemCode, string WhsCode)
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" SELECT ");
-            m_sSQL.Append(" SUM(T0.\"OnHand\" - (T0.\"IsCommited\" - IFNULL( (SELECT ");
-            m_sSQL.Append(" SUM(T5.\"Quantity\") ");
-            m_sSQL.Append(" FROM RDR1 T5, ORDR T6 ");
-            m_sSQL.Append(" WHERE T5.\"ItemCode\" = T0.\"ItemCode\" ");
-            m_sSQL.Append(" AND T5.\"WhsCode\" = T0.\"WhsCode\" ");
-            m_sSQL.Append(" AND T6.\"CANCELED\" = 'N' ");
-            m_sSQL.Append(" AND T6.\"PoPrss\" = 'Y' ");
-            m_sSQL.Append(" AND T6.\"DocStatus\" = 'O' ");
-            m_sSQL.Append(" AND T5.\"DocEntry\" = T6.\"DocEntry\"), ");
-            m_sSQL.Append(" 0))) AS \"Stock\", ");
-            m_sSQL.Append(" T0.\"ItemCode\" ");
-            m_sSQL.Append(" FROM OITW T0 ");
-            m_sSQL.AppendFormat(" WHERE T0.\"ItemCode\" = '{0}' ", valor);
-            m_sSQL.AppendFormat(" AND T0.\"WhsCode\" = '{0}' ", "300-28");
-            m_sSQL.Append(" GROUP BY T0.\"ItemCode\" ");
+            m_sSQL.Append(" SELECT T0.\"Stock\" FROM CAST_PEDIDOS_STOCK_DISPONIBLE T0 ");
+            m_sSQL.AppendFormat(" WHERE T0.\"ItemCode\" = '{0}' ", ItemCode);
+            m_sSQL.AppendFormat(" AND T0.\"WhsCode\" = '{0}' ", WhsCode);
 
             return m_sSQL.ToString();
         }
@@ -62,14 +49,13 @@ namespace Servicio_Cast_Pedidos.Clases
         /// 
         /// </summary>
         /// <returns></returns>
-        public static string GetPrecioLista(string valor)
+        public static string GetPrecioLista(string ItemCode, int ListNum)
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" SELECT IFNULL(T0.\"Price\", 0) AS \"Price\" FROM ITM1 T0 ");
-            m_sSQL.Append(" INNER JOIN OPLN T1 ON T0.\"PriceList\" = T1.\"ListNum\" ");
-            m_sSQL.AppendFormat(" WHERE T0.\"ItemCode\" = '{0}' ", valor);
-            m_sSQL.AppendFormat(" AND T1.\"ListNum\" = '{0}' ", "1");
+            m_sSQL.Append(" SELECT T0.\"Price\" FROM CAST_PEDIDOS_PRECIO_LISTA T0 ");
+            m_sSQL.AppendFormat(" WHERE T0.\"ItemCode\" = '{0}' ", ItemCode);
+            m_sSQL.AppendFormat(" AND T1.\"ListNum\" = '{0}' ", ListNum);
 
             return m_sSQL.ToString();
         }
