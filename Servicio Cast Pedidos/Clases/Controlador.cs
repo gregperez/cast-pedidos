@@ -162,10 +162,6 @@ namespace Servicio_Cast_Pedidos.Clases
                 System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
                     System.Reflection.MethodBase.GetCurrentMethod().Name, ex.Message.ToString(), ex.StackTrace.ToString()));
             }
-            finally
-            {
-                dbOracleCab.Dispose();
-            }
         }
 
         public bool ValidarCreditoDisponible()

@@ -55,7 +55,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             m_sSQL.Append(" SELECT T0.\"Price\" FROM CAST_PEDIDOS_PRECIO_LISTA T0 ");
             m_sSQL.AppendFormat(" WHERE T0.\"ItemCode\" = '{0}' ", ItemCode);
-            m_sSQL.AppendFormat(" AND T1.\"ListNum\" = '{0}' ", ListNum);
+            m_sSQL.AppendFormat(" AND T0.\"ListNum\" = '{0}' ", ListNum);
 
             return m_sSQL.ToString();
         }
