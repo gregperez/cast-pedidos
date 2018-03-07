@@ -24,7 +24,7 @@ namespace Servicio_Cast_Pedidos.Clases
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" SELECT T0.\"CreditLine\" FROM CAST_PEDIDO_LIMITE_CREDITO T0 ");
+            m_sSQL.Append(" SELECT T0.\"CreditLine\" FROM CAST_PEDIDOS_LIMITE_CREDITO T0 ");
             m_sSQL.AppendFormat(" WHERE T0.\"CardCode\" = '{0}' ", CardCode);
 
             return m_sSQL.ToString();
@@ -55,11 +55,40 @@ namespace Servicio_Cast_Pedidos.Clases
 
             m_sSQL.Append(" SELECT T0.\"Price\" FROM CAST_PEDIDOS_PRECIO_LISTA T0 ");
             m_sSQL.AppendFormat(" WHERE T0.\"ItemCode\" = '{0}' ", ItemCode);
-            m_sSQL.AppendFormat(" AND T1.\"ListNum\" = '{0}' ", ListNum);
+            m_sSQL.AppendFormat(" AND T0.\"ListNum\" = '{0}' ", ListNum);
 
             return m_sSQL.ToString();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public static string GetParametroValor(string CodParam)
+        {
+            m_sSQL.Length = 0;
+
+            m_sSQL.Append(" SELECT \"U_EXX_ValParam\" \"ValParam\" FROM \"@EXX_CONFCASTPED\" ");
+            m_sSQL.AppendFormat(" WHERE \"U_EXX_CodParam\" = '{0}' ", CodParam);
+
+            return m_sSQL.ToString();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public static string GetCardCode(string RUC)
+        {
+            m_sSQL.Length = 0;
+
+            m_sSQL.Append(" SELECT T0.\"CardCode\" FROM OCRD T0 ");
+            m_sSQL.AppendFormat(" WHERE T0.\"LicTradNum\" = '{0}' ", RUC);
+            m_sSQL.Append(" AND T0.\"CardType\" = 'C' ");
+
+            return m_sSQL.ToString();
+        }
+        
         #endregion
     }
 }
