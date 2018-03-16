@@ -41,7 +41,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             m_sSQL.Append(" SELECT * FROM gen_pedidos_det "); ;
             m_sSQL.AppendFormat(" WHERE nro_comprobante = '{0}' ", valor.ToString());
-            m_sSQL.Append(" AND procesado = 'N' ");
+            m_sSQL.Append(" AND procesado != 'S' ");
 
             return m_sSQL.ToString();
         }
@@ -110,13 +110,13 @@ namespace Servicio_Cast_Pedidos.Clases
             return m_sSQL.ToString();
         }
 
-        public static string EmpleadoEquivalencia(string codPersona)
+        public static string EmpleadoEquivalencia(string codPersona,string codEmpresa)
         {
             m_sSQL.Length = 0;
 
             m_sSQL.Append("SELECT DISTINCT COD_CLIENTE as \"codCliente\", NOMBRE_CLIENTE as \"nomCliente\" " +
                         "FROM CLIENTES c " +
-                        "WHERE  c.COD_PERSONA_INV = '" + codPersona + "' AND c.ESTADO='S'");
+                        "WHERE  c.COD_PERSONA_INV = '" + codPersona + "'AND COD_EMPRESA='"+ codEmpresa  + "' AND c.ESTADO='S'");
             return m_sSQL.ToString();
         }
 

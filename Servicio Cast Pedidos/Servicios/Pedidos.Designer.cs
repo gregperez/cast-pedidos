@@ -1,4 +1,4 @@
-﻿namespace Servicio_Cast_Pedidos.Servicios
+﻿namespace Servicio_Cast_Pedidos
 {
     partial class Pedidos
     {

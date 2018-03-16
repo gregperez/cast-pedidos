@@ -30,6 +30,17 @@ namespace Servicio_Cast_Pedidos.Clases
             return m_sSQL.ToString();
         }
 
+        public static string GetLineaCreditoUDO(string CardCode,string codEmpresa)
+        {
+            m_sSQL.Length = 0;
+
+            m_sSQL.Append(" SELECT T0.\"U_Linea_Cred\" FROM \"@EXX_DET_LINCRED\" T0 ");
+            m_sSQL.AppendFormat(" WHERE T0.\"Code\" = '{0}' ", CardCode);
+            m_sSQL.AppendFormat(" AND T0.\"U_Cod_Empresa\" = '{0}' ", codEmpresa);
+
+            return m_sSQL.ToString();
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -44,6 +55,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             return m_sSQL.ToString();
         }
+
 
         /// <summary>
         /// 
