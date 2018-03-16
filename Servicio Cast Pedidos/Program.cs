@@ -4,7 +4,6 @@ using System.Linq;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
-using Servicio_Cast_Pedidos.Servicios;
 using System.Reflection;
 
 namespace Servicio_Cast_Pedidos
