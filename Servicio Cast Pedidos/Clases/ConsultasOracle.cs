@@ -25,7 +25,7 @@ namespace Servicio_Cast_Pedidos.Clases
             m_sSQL.Length = 0;
 
             m_sSQL.Append(" SELECT * FROM gen_pedidos_cab ");
-            m_sSQL.Append(" WHERE procesado != 'S' ");
+            m_sSQL.Append(" WHERE procesado = 'N' ");
             //m_sSQL.Append(" AND nro_comprobante = '207' ");
 
             return m_sSQL.ToString();
@@ -50,11 +50,21 @@ namespace Servicio_Cast_Pedidos.Clases
         /// 
         /// </summary>
         /// <returns></returns>
-        public static string UpdatePedido(string valor)
+        public static string UpdatePedidoCab(string valor)
         {
             m_sSQL.Length = 0;
 
             m_sSQL.Append(" UPDATE gen_pedidos_cab SET procesado = 'S' ");
+            m_sSQL.AppendFormat(" WHERE nro_comprobante = '{0}'", valor.ToString());
+
+            return m_sSQL.ToString();
+        }
+
+        public static string UpdatePedidoDet(string valor)
+        {
+            m_sSQL.Length = 0;
+
+            m_sSQL.Append(" UPDATE gen_pedidos_det SET procesado = 'S' ");
             m_sSQL.AppendFormat(" WHERE nro_comprobante = '{0}'", valor.ToString());
 
             return m_sSQL.ToString();
@@ -109,8 +119,6 @@ namespace Servicio_Cast_Pedidos.Clases
                         "WHERE  c.COD_PERSONA_INV = '" + codPersona + "'AND COD_EMPRESA='"+ codEmpresa  + "' AND c.ESTADO='S'");
             return m_sSQL.ToString();
         }
-
-
 
         #endregion
     }

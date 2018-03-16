@@ -184,6 +184,7 @@ namespace Servicio_Cast_Pedidos.Clases
             SAPbobsCOM.Recordset oRecordset = null;
             string cardCode = string.Empty;
             oRecordset = (SAPbobsCOM.Recordset)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
+
             DBOracle consultas = new DBOracle(ServerOracle, UserOracle, PassOracle);
 
             string empresaSAP = "";
@@ -271,11 +272,15 @@ namespace Servicio_Cast_Pedidos.Clases
             int listaPrecio)
         {
             DBOracle consultas = new DBOracle(ServerOracle, UserOracle, PassOracle);
+            DBOracle dbOracleUpdate = new DBOracle(ServerOracle, UserOracle, PassOracle);
+
             SAPbobsCOM.Recordset oRecordset = null;
             oRecordset = (SAPbobsCOM.Recordset)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
             string empresa = string.Empty;
             string empresaSAp = "";
             string nroPedido = "";
+            int filas = 0;
+
             if (esPedido)
                 oDoc = (SAPbobsCOM.Documents)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oOrders);
             else
@@ -287,7 +292,7 @@ namespace Servicio_Cast_Pedidos.Clases
             //    oDoc.CardCode = oRecordset.Fields.Item("CardCode").Value.ToString();
             //}
             empresa = dbOracleCab.oDataReader["cod_empresa"].ToString();
-           
+
             consultas.EjecutaSQL(ConsultasOracle.EmpresaEquivalencia(empresa));
             if (consultas.oDataReader.Read())
             {
@@ -299,7 +304,7 @@ namespace Servicio_Cast_Pedidos.Clases
             if (consultas.oDataReader.Read())
             {
                 oDoc.CardCode = consultas.oDataReader["codCliente"].ToString();
-            }           
+            }
             
             oDoc.DocDate = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
             oDoc.DocDueDate = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
@@ -351,6 +356,7 @@ namespace Servicio_Cast_Pedidos.Clases
             //{
             //    oDoc.UserFields.Fields.Item("U_DocOrigen").Value = oRecordset.Fields.Item("ValParam").Value.ToString();
             //}
+
             //oDoc.UserFields.Fields.Item("U_procesado").Value = dbOracleCab.oDataReader["procesado"].ToString();
             if (!creditoOK)
             {
@@ -408,25 +414,35 @@ namespace Servicio_Cast_Pedidos.Clases
             if (Respuesta != 0)
             {
                 oCompany.GetLastError(out Respuesta, out MsgErrSBO);
-                //Application.SBO_Application.MessageBox(Program.AddOnName + ": Error al generar el asiento:" + MsgErrSBO);
                 System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
                     System.Reflection.MethodBase.GetCurrentMethod().Name, Respuesta, MsgErrSBO));
 
+                DateTime fecha = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
+                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante, fecha.ToString("dd/MM/yyyy"));
+                filas = 0;
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
+                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera Error: {0}, del documento {1} ",
+                    filas, nro_comprobante));
+                filas = 0;
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
+                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle Error: {0}, del documento {1} ",
+                    filas, nro_comprobante));
                 WriteErrorLog("CrearPedido:"+nroPedido+" Error: " + Respuesta +" " + MsgErrSBO);
             }
             else
             {
                 identi = oCompany.GetNewObjectKey();
-                DBOracle dbOracleUpdate = new DBOracle(ServerOracle, UserOracle, PassOracle);
-                int filas = 0;
-                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedido(nro_comprobante), ref filas);
-                //Application.SBO_Application.MessageBox("La Matricula " + identi + " fue creada exitosamente ");
-                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas: {0}, del documento {1} ",
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
+                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera: {0}, del documento {1} ",
+                    filas, nro_comprobante));
+                filas = 0;
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
+                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle: {0}, del documento {1} ",
                     filas, nro_comprobante));
 
             }
         }
-
+        
         public static void WriteErrorLog(string strErrorText)
         {
             try
@@ -440,6 +456,26 @@ namespace Servicio_Cast_Pedidos.Clases
                 WriteErrorLog("Error in WriteErrorLog: " + ex.Message);
             }
         }
+        
+        private void CrearRegistroLog(string codError, string descError, string nroPed, string fecha)
+        {
+            SAPbobsCOM.CompanyService oCompanyService = null;
+            SAPbobsCOM.GeneralData oGeneralData = null;
+            SAPbobsCOM.GeneralService oGeneralService = null;
+
+            oCompanyService = oCompany.GetCompanyService();
+            oGeneralService = oCompanyService.GetGeneralService("EXXLOGCASTPEDID");
+            oGeneralData = ((SAPbobsCOM.GeneralData)(oGeneralService.GetDataInterface(SAPbobsCOM.GeneralServiceDataInterfaces.gsGeneralData)));
+
+            oGeneralData.SetProperty("U_EXX_CodError", codError);
+            oGeneralData.SetProperty("U_EXX_DescError", descError);
+            oGeneralData.SetProperty("U_EXX_NroPed", nroPed);
+            oGeneralData.SetProperty("U_EXX_Fecha", fecha);
+
+            SAPbobsCOM.GeneralDataParams oGeneralParams = null;
+            oGeneralParams = oGeneralService.Add(oGeneralData);
+        }
+        
         #endregion
 
 
