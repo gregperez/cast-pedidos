@@ -360,9 +360,27 @@ namespace Servicio_Cast_Pedidos.Clases
             //oDoc.UserFields.Fields.Item("U_procesado").Value = dbOracleCab.oDataReader["procesado"].ToString();
             if (!creditoOK)
             {
-                //oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = String.Format("Oferta de venta creada por rechazo del Pedido {0}, " +
-                //                "por limite de crédito excedido.", nro_comprobante);
                 oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "LCredito";
+            }
+            if (!stockOK)
+            {
+                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Problemas de Stock en detalle";
+            }
+            if (!precioOK)
+            {
+                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Problemas de Precio en detalle";
+            }
+            if (!creditoOK && !stockOK)
+            {
+                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Linea de crédito, Stock en detalle";
+            }
+            if (!creditoOK && !precioOK)
+            {
+                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Linea de crédito, Precio en detalle";
+            }
+            if (!stockOK && !precioOK)
+            {
+                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Problemas de Precio y Stock en detalle";
             }
             oDoc.DocType = SAPbobsCOM.BoDocumentTypes.dDocument_Items;
 
