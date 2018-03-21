@@ -172,8 +172,10 @@ namespace Servicio_Cast_Pedidos.Clases
             }
             catch (Exception ex)
             {
-                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
-                    System.Reflection.MethodBase.GetCurrentMethod().Name, ex.Message.ToString(), ex.StackTrace.ToString()));
+                DateTime fecha = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
+                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante, fecha.ToString("dd/MM/yyyy"));
+                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
+                //    System.Reflection.MethodBase.GetCurrentMethod().Name, ex.Message.ToString(), ex.StackTrace.ToString()));
                 WriteErrorLog("ProcesarPedidos:" + error_comprobante + " Mensaje:" + ex.Message.ToString());
             }
         }
@@ -360,27 +362,15 @@ namespace Servicio_Cast_Pedidos.Clases
             //oDoc.UserFields.Fields.Item("U_procesado").Value = dbOracleCab.oDataReader["procesado"].ToString();
             if (!creditoOK)
             {
-                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "LCredito";
+                oDoc.UserFields.Fields.Item("U_LimiCrediVal").Value = "S";
             }
             if (!stockOK)
             {
-                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Problemas de Stock en detalle";
+                oDoc.UserFields.Fields.Item("U_StockVal").Value = "S";
             }
             if (!precioOK)
             {
-                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Problemas de Precio en detalle";
-            }
-            if (!creditoOK && !stockOK)
-            {
-                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Linea de crédito, Stock en detalle";
-            }
-            if (!creditoOK && !precioOK)
-            {
-                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Linea de crédito, Precio en detalle";
-            }
-            if (!stockOK && !precioOK)
-            {
-                oDoc.UserFields.Fields.Item("U_MotivoOferta").Value = "Problemas de Precio y Stock en detalle";
+                oDoc.UserFields.Fields.Item("U_PrecioVal").Value = "S";
             }
             oDoc.DocType = SAPbobsCOM.BoDocumentTypes.dDocument_Items;
 
@@ -432,31 +422,31 @@ namespace Servicio_Cast_Pedidos.Clases
             if (Respuesta != 0)
             {
                 oCompany.GetLastError(out Respuesta, out MsgErrSBO);
-                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
-                    System.Reflection.MethodBase.GetCurrentMethod().Name, Respuesta, MsgErrSBO));
+                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
+                //    System.Reflection.MethodBase.GetCurrentMethod().Name, Respuesta, MsgErrSBO));
 
                 DateTime fecha = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
                 CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante, fecha.ToString("dd/MM/yyyy"));
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
-                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera Error: {0}, del documento {1} ",
-                    filas, nro_comprobante));
+                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera Error: {0}, del documento {1} ",
+                //    filas, nro_comprobante));
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle Error: {0}, del documento {1} ",
-                    filas, nro_comprobante));
+                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle Error: {0}, del documento {1} ",
+                //    filas, nro_comprobante));
                 WriteErrorLog("CrearPedido:"+nroPedido+" Error: " + Respuesta +" " + MsgErrSBO);
             }
             else
             {
                 identi = oCompany.GetNewObjectKey();
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
-                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera: {0}, del documento {1} ",
-                    filas, nro_comprobante));
+                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera: {0}, del documento {1} ",
+                //    filas, nro_comprobante));
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle: {0}, del documento {1} ",
-                    filas, nro_comprobante));
+                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle: {0}, del documento {1} ",
+                //    filas, nro_comprobante));
 
             }
         }
