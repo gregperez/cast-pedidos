@@ -362,7 +362,7 @@ namespace Servicio_Cast_Pedidos.Clases
             //oDoc.UserFields.Fields.Item("U_procesado").Value = dbOracleCab.oDataReader["procesado"].ToString();
             if (!creditoOK)
             {
-                oDoc.UserFields.Fields.Item("U_LimiCediVal").Value = "S";
+                oDoc.UserFields.Fields.Item("U_LimiCrediVal").Value = "S";
             }
             if (!stockOK)
             {
