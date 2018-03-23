@@ -39,9 +39,12 @@ namespace Servicio_Cast_Pedidos.Clases
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" SELECT * FROM gen_pedidos_det "); ;
-            m_sSQL.AppendFormat(" WHERE nro_comprobante = '{0}' ", valor.ToString());
-            m_sSQL.Append(" AND procesado != 'S' ");
+            m_sSQL.Append(" SELECT d1.nro_item \"nro_item\", d1.cod_articulo \"cod_articulo\", ");
+            m_sSQL.Append(" nvl(d1.cantidad, 0) \"cantidad\", nvl(d1.precio_unitario, 0) \"precio_unitario\", ");
+            m_sSQL.Append(" nvl(d1.monto_total, 0) \"monto_total\", nvl(d1.total_iva, 0) \"total_iva\" ");
+            m_sSQL.Append(" FROM gen_pedidos_det d1 ");
+            m_sSQL.AppendFormat(" WHERE d1.nro_comprobante = '{0}' ", valor.ToString());
+            m_sSQL.Append(" AND d1.procesado != 'S' ");
 
             return m_sSQL.ToString();
         }

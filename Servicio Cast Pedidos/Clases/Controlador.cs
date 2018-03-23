@@ -42,13 +42,15 @@ namespace Servicio_Cast_Pedidos.Clases
             string strPathLog = @"C:\Users\Exxispydesa2\Desktop\Pedidos.txt";
             TextWriter tw = new StreamWriter(strPathLog, true);
 
+            string nro_comprobante = "";
+
             try
             {
                 if (dbOracleCab.EjecutaSQL(ConsultasOracle.GetPedidosCab()))
                 {
                     while (dbOracleCab.oDataReader.Read())
                     {
-                        string nro_comprobante = dbOracleCab.oDataReader["nro_comprobante"].ToString();
+                        nro_comprobante = dbOracleCab.oDataReader["nro_comprobante"].ToString();
                         tw.WriteLine(String.Format("cod_empresa: {0}", dbOracleCab.oDataReader["cod_empresa"].ToString()));
                         tw.WriteLine(String.Format("nro_comprobante: {0}", dbOracleCab.oDataReader["nro_comprobante"].ToString()));
                         tw.WriteLine(String.Format("fec_comprobante: {0}", dbOracleCab.oDataReader["fec_comprobante"].ToString()));
@@ -74,6 +76,7 @@ namespace Servicio_Cast_Pedidos.Clases
             catch (Exception ex)
             {
                 // Gestion de errores.
+                CrearRegistroLog(ex.HResult.ToString(), ex.Message.ToString(), nro_comprobante);
             }
         }
 
@@ -153,7 +156,7 @@ namespace Servicio_Cast_Pedidos.Clases
                             esPedido = false;
                             creditoOK = false;
                         }
-                        if (!ValidarStockDisponible(ref stockOK, ref precioOK, almacen, listaPrecio))
+                        if (!ValidarStockyPrecio(ref stockOK, ref precioOK, almacen, listaPrecio))
                         {
                             esPedido = false;
                         }
@@ -172,8 +175,7 @@ namespace Servicio_Cast_Pedidos.Clases
             }
             catch (Exception ex)
             {
-                DateTime fecha = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
-                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante, fecha.ToString("dd/MM/yyyy"));
+                CrearRegistroLog(ex.HResult.ToString(), ex.Message.ToString(), nro_comprobante);
                 //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
                 //    System.Reflection.MethodBase.GetCurrentMethod().Name, ex.Message.ToString(), ex.StackTrace.ToString()));
                 WriteErrorLog("ProcesarPedidos:" + error_comprobante + " Mensaje:" + ex.Message.ToString());
@@ -225,7 +227,7 @@ namespace Servicio_Cast_Pedidos.Clases
             return esValido;
         }
 
-        public bool ValidarStockDisponible(ref bool stockOK, ref bool precioOK, string almacen,
+        public bool ValidarStockyPrecio(ref bool stockOK, ref bool precioOK, string almacen,
             int listaPrecio)
         {
             bool esValido = true;
@@ -234,7 +236,7 @@ namespace Servicio_Cast_Pedidos.Clases
             DBOracle detalleCopy = new DBOracle(ServerOracle, UserOracle, PassOracle);
             detalleCopy = dbOracleDet;
 
-            while (detalleCopy.oDataReader.Read() && stockOK && precioOK)
+            while (detalleCopy.oDataReader.Read())
             {
                 string cod_articulo = "";
                 double cantidad = 0;
@@ -249,7 +251,6 @@ namespace Servicio_Cast_Pedidos.Clases
                     {
                         stockOK = false;
                         esValido = false;
-                        break;
                     }
                 }
                     
@@ -260,7 +261,6 @@ namespace Servicio_Cast_Pedidos.Clases
                     {
                         precioOK = false;
                         esValido = false;
-                        break;
                     }
                 }
             }
@@ -385,29 +385,56 @@ namespace Servicio_Cast_Pedidos.Clases
                     oDoc.Lines.UnitPrice = Convert.ToDouble(dbOracleDet.oDataReader["precio_unitario"].ToString());
                     oDoc.Lines.TaxCode = "IVA_10";
 
-                    if (!stockOK)
+                    if (!stockOK && !precioOK)
                     {
+                        double cantidad = 0;
+                        double precio = 0;
                         oRecordset.DoQuery(ConsultasSap.GetItemStock(oDoc.Lines.ItemCode, almacen));
                         if (oRecordset.RecordCount > 0)
                         {
                             if (oDoc.Lines.Quantity > Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()))
                             {
-                                oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value = 
-                                    String.Format("Cantidad solicitada ({0}) supera el stock disponible ({1}).",
-                                    oDoc.Lines.Quantity, Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()));
+                                cantidad = Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString());
                             }
                         }
-                    }
-                    if (!precioOK)
-                    {
                         oRecordset.DoQuery(ConsultasSap.GetPrecioLista(oDoc.Lines.ItemCode, listaPrecio));
                         if (oRecordset.RecordCount > 0)
                         {
                             if (oDoc.Lines.UnitPrice < Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()))
                             {
-                                oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
-                                    String.Format("Precio de venta ({0}) es menor al de la lista de precio predeterminada ({1}).",
-                                    oDoc.Lines.UnitPrice, Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()));
+                                precio = Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString());
+                            }
+                        }
+                        oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
+                            String.Format("Cantidad solicitada: {0}, disponible: {1}. Precio venta: {2}, lista: {3}.",
+                            oDoc.Lines.Quantity, cantidad, oDoc.Lines.UnitPrice, precio);
+                    }
+                    else
+                    {
+                        if (!stockOK)
+                        {
+                            oRecordset.DoQuery(ConsultasSap.GetItemStock(oDoc.Lines.ItemCode, almacen));
+                            if (oRecordset.RecordCount > 0)
+                            {
+                                if (oDoc.Lines.Quantity > Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()))
+                                {
+                                    oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
+                                        String.Format("Cantidad solicitada ({0}) supera el stock disponible ({1}).",
+                                        oDoc.Lines.Quantity, Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()));
+                                }
+                            }
+                        }
+                        if (!precioOK)
+                        {
+                            oRecordset.DoQuery(ConsultasSap.GetPrecioLista(oDoc.Lines.ItemCode, listaPrecio));
+                            if (oRecordset.RecordCount > 0)
+                            {
+                                if (oDoc.Lines.UnitPrice < Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()))
+                                {
+                                    oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
+                                        String.Format("Precio de venta ({0}) es menor al de la lista de precio predeterminada ({1}).",
+                                        oDoc.Lines.UnitPrice, Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()));
+                                }
                             }
                         }
                     }
@@ -424,9 +451,8 @@ namespace Servicio_Cast_Pedidos.Clases
                 oCompany.GetLastError(out Respuesta, out MsgErrSBO);
                 //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
                 //    System.Reflection.MethodBase.GetCurrentMethod().Name, Respuesta, MsgErrSBO));
-
-                DateTime fecha = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
-                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante, fecha.ToString("dd/MM/yyyy"));
+                
+                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante);
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
                 //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera Error: {0}, del documento {1} ",
@@ -465,7 +491,7 @@ namespace Servicio_Cast_Pedidos.Clases
             }
         }
         
-        private void CrearRegistroLog(string codError, string descError, string nroPed, string fecha)
+        private void CrearRegistroLog(string codError, string descError, string nroPed)
         {
             SAPbobsCOM.CompanyService oCompanyService = null;
             SAPbobsCOM.GeneralData oGeneralData = null;
@@ -478,7 +504,7 @@ namespace Servicio_Cast_Pedidos.Clases
             oGeneralData.SetProperty("U_EXX_CodError", codError);
             oGeneralData.SetProperty("U_EXX_DescError", descError);
             oGeneralData.SetProperty("U_EXX_NroPed", nroPed);
-            oGeneralData.SetProperty("U_EXX_Fecha", fecha);
+            oGeneralData.SetProperty("U_EXX_Fecha", String.Format("{0:G}", DateTime.Now.ToString()));
 
             SAPbobsCOM.GeneralDataParams oGeneralParams = null;
             oGeneralParams = oGeneralService.Add(oGeneralData);
