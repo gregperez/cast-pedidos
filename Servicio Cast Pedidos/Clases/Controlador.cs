@@ -139,11 +139,6 @@ namespace Servicio_Cast_Pedidos.Clases
                         dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante));
 
                         oRecordset = (SAPbobsCOM.Recordset)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-                        //oRecordset.DoQuery(ConsultasSap.GetParametroValor("Almacen"));
-                        //if (oRecordset.RecordCount > 0)
-                        //{
-                        //    almacen = oRecordset.Fields.Item("ValParam").Value.ToString();
-                        //}
 
                         oRecordset.DoQuery(ConsultasSap.GetParametroValor("ListaPrecio"));
                         if (oRecordset.RecordCount > 0)
@@ -176,15 +171,13 @@ namespace Servicio_Cast_Pedidos.Clases
             catch (Exception ex)
             {
                 CrearRegistroLog(ex.HResult.ToString(), ex.Message.ToString(), nro_comprobante);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
-                //    System.Reflection.MethodBase.GetCurrentMethod().Name, ex.Message.ToString(), ex.StackTrace.ToString()));
                 WriteErrorLog("ProcesarPedidos:" + error_comprobante + " Mensaje:" + ex.Message.ToString());
             }
         }
 
         public bool ValidarCreditoDisponible(ref string almacen)
         {
-            bool esValido = true;
+            bool esValido = false;
             SAPbobsCOM.Recordset oRecordset = null;
             string cardCode = string.Empty;
             oRecordset = (SAPbobsCOM.Recordset)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
@@ -209,19 +202,11 @@ namespace Servicio_Cast_Pedidos.Clases
                 almacen = consultas.oDataReader["codSucSAP"].ToString();
             }
 
-            //oRecordset.DoQuery(ConsultasSap.GetCardCode(dbOracleCab.oDataReader["ruc"].ToString()));
-            //if (oRecordset.RecordCount > 0)
-            //{
-            //    cardCode = oRecordset.Fields.Item("CardCode").Value.ToString();
-            //}
-            //oRecordset.DoQuery(ConsultasSap.GetLineaCredito(cardCode));
-
-
             oRecordset.DoQuery(ConsultasSap.GetLineaCreditoUDO(cardCode, empresaSAP));
             if (oRecordset.RecordCount > 0)
             {
-                if (Convert.ToDouble(dbOracleCab.oDataReader["monto_total"].ToString()) > Convert.ToDouble(oRecordset.Fields.Item("U_Linea_Cred").Value))
-                    esValido = false;
+                if (Convert.ToDouble(oRecordset.Fields.Item("U_Linea_Cred").Value) > Convert.ToDouble(dbOracleCab.oDataReader["monto_total"].ToString()))
+                    esValido = true;
             }
 
             return esValido;
@@ -343,7 +328,7 @@ namespace Servicio_Cast_Pedidos.Clases
             oDoc.UserFields.Fields.Item("U_wms_id_transaccion").Value = dbOracleCab.oDataReader["wms_id_transaccion"].ToString();
             oDoc.UserFields.Fields.Item("U_control").Value = dbOracleCab.oDataReader["solo_credito"].ToString();
             string origen = "";
-            if (dbOracleCab.oDataReader["ser_comprobante"].ToString().Equals("AA"))
+            if (dbOracleCab.oDataReader["origen"].ToString().Equals(""))
             {
                 origen = "CAST";
             }
@@ -352,14 +337,7 @@ namespace Servicio_Cast_Pedidos.Clases
                 origen = "INVENTIVA";
             }
             oDoc.UserFields.Fields.Item("U_DocOrigen").Value = origen;
-
-            //oRecordset.DoQuery(ConsultasSap.GetParametroValor("DocOrigen"));
-            //if (oRecordset.RecordCount > 0)
-            //{
-            //    oDoc.UserFields.Fields.Item("U_DocOrigen").Value = oRecordset.Fields.Item("ValParam").Value.ToString();
-            //}
-
-            //oDoc.UserFields.Fields.Item("U_procesado").Value = dbOracleCab.oDataReader["procesado"].ToString();
+            
             if (!creditoOK)
             {
                 oDoc.UserFields.Fields.Item("U_LimiCrediVal").Value = "S";
@@ -449,30 +427,20 @@ namespace Servicio_Cast_Pedidos.Clases
             if (Respuesta != 0)
             {
                 oCompany.GetLastError(out Respuesta, out MsgErrSBO);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
-                //    System.Reflection.MethodBase.GetCurrentMethod().Name, Respuesta, MsgErrSBO));
                 
                 CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante);
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera Error: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle Error: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
                 WriteErrorLog("CrearPedido:"+nroPedido+" Error: " + Respuesta +" " + MsgErrSBO);
             }
             else
             {
                 identi = oCompany.GetNewObjectKey();
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
 
             }
         }

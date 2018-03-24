@@ -26,7 +26,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             m_sSQL.Append(" SELECT * FROM gen_pedidos_cab ");
             m_sSQL.Append(" WHERE procesado = 'N' ");
-            //m_sSQL.Append(" AND nro_comprobante = '207' ");
+            //m_sSQL.Append(" WHERE nro_comprobante = '16' ");
 
             return m_sSQL.ToString();
         }
