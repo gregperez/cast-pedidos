@@ -173,6 +173,10 @@ namespace Servicio_Cast_Pedidos.Clases
                 CrearRegistroLog(ex.HResult.ToString(), ex.Message.ToString(), nro_comprobante);
                 WriteErrorLog("ProcesarPedidos:" + error_comprobante + " Mensaje:" + ex.Message.ToString());
             }
+            finally
+            {
+                dbSap.DesconectarSAP(oCompany);
+            }
         }
 
         public bool ValidarCreditoDisponible(ref string almacen)
@@ -310,8 +314,10 @@ namespace Servicio_Cast_Pedidos.Clases
                 oDoc.DocCurrency = consultas.oDataReader["codMonedaSAP"].ToString();
             }
 
-
-            oDoc.DocRate = Convert.ToDouble(dbOracleCab.oDataReader["tip_cambio"].ToString());
+            if (!dbOracleCab.oDataReader["tip_cambio"].ToString().Equals(""))
+            {
+                oDoc.DocRate = Convert.ToDouble(dbOracleCab.oDataReader["tip_cambio"].ToString());
+            }
             //oDoc.DocumentStatus = SAPbobsCOM.BoStatus.bost_Open;// dbOracleCab.oDataReader["estado"].ToString();
             oDoc.Comments = dbOracleCab.oDataReader["comentario"].ToString();
             oDoc.FederalTaxID = dbOracleCab.oDataReader["ruc"].ToString();
