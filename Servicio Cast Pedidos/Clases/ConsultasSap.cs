@@ -34,9 +34,10 @@ namespace Servicio_Cast_Pedidos.Clases
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" SELECT T0.\"U_Linea_Cred\" FROM \"@EXX_DET_LINCRED\" T0 ");
+            m_sSQL.Append(" SELECT T0.\"U_Saldo_disp\" FROM \"@EXX_DET_LINCRED\" T0 ");
             m_sSQL.AppendFormat(" WHERE T0.\"Code\" = '{0}' ", CardCode);
             m_sSQL.AppendFormat(" AND T0.\"U_Cod_Empresa\" = '{0}' ", codEmpresa);
+            m_sSQL.AppendFormat(" AND T0.\"U_FechaHasta\" > '{0}' ", DateTime.Now.ToString("yyyyMMdd"));
 
             return m_sSQL.ToString();
         }
