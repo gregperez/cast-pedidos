@@ -209,7 +209,7 @@ namespace Servicio_Cast_Pedidos.Clases
             oRecordset.DoQuery(ConsultasSap.GetLineaCreditoUDO(cardCode, empresaSAP));
             if (oRecordset.RecordCount > 0)
             {
-                if (Convert.ToDouble(oRecordset.Fields.Item("U_Linea_Cred").Value) > Convert.ToDouble(dbOracleCab.oDataReader["monto_total"].ToString()))
+                if (Convert.ToDouble(oRecordset.Fields.Item("U_Saldo_disp").Value) > Convert.ToDouble(dbOracleCab.oDataReader["monto_total"].ToString()))
                     esValido = true;
             }
 
