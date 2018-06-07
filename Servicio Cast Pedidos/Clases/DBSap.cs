@@ -116,23 +116,6 @@ namespace Servicio_Cast_Pedidos.Clases
             return ok;
         }
 
-        public void LiberarObjeto(Object oObject)
-        {
-            try
-            {
-                if (oObject != null)
-                    System.Runtime.InteropServices.Marshal.ReleaseComObject(oObject);
-
-                oObject = null;
-                GC.Collect();
-            }
-            catch (Exception)
-            {
-                oObject = null;
-                GC.Collect();
-            }
-        }
-
         #endregion
     }
 }

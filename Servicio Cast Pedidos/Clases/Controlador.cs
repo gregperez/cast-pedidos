@@ -175,9 +175,21 @@ namespace Servicio_Cast_Pedidos.Clases
             }
             finally
             {
-                dbSap.LiberarObjeto(oDoc);
-                dbSap.LiberarObjeto(oRecordset);
-                dbSap.LiberarObjeto(oCompany);
+                if (!dbOracleCab.oDataReader.IsClosed)
+                    dbOracleCab.oDataReader.Close();
+
+                dbOracleCab.oDataReader.Dispose();
+
+                if (!dbOracleDet.oDataReader.IsClosed)
+                    dbOracleDet.oDataReader.Close();
+
+                dbOracleDet.oDataReader.Dispose();
+
+                LiberarObjeto(oDoc);
+                LiberarObjeto(oRecordset);
+                LiberarObjeto(oCompany);
+
+                GC.Collect();
             }
         }
 
@@ -215,7 +227,12 @@ namespace Servicio_Cast_Pedidos.Clases
                     esValido = true;
             }
 
-            dbSap.LiberarObjeto(oRecordset);
+            if (!consultas.oDataReader.IsClosed)
+                consultas.oDataReader.Close();
+
+            consultas.oDataReader.Dispose();
+
+            LiberarObjeto(oRecordset);
 
             return esValido;
         }
@@ -258,13 +275,18 @@ namespace Servicio_Cast_Pedidos.Clases
                 }
             }
 
-            dbSap.LiberarObjeto(oRecordset);
+            if (!detalleCopy.oDataReader.IsClosed)
+                detalleCopy.oDataReader.Close();
+
+            detalleCopy.oDataReader.Dispose();
+
+            LiberarObjeto(oRecordset);
 
             return esValido;
         }
 
-        public void CrearPedido(SAPbobsCOM.Documents oDoc, string nro_comprobante, 
-            int Respuesta, string MsgErrSBO, string identi, bool esPedido, 
+        public void CrearPedido(SAPbobsCOM.Documents oDoc, string nro_comprobante,
+            int Respuesta, string MsgErrSBO, string identi, bool esPedido,
             bool creditoOK, bool stockOK, bool precioOK, string almacen,
             int listaPrecio)
         {
@@ -302,7 +324,7 @@ namespace Servicio_Cast_Pedidos.Clases
             {
                 oDoc.CardCode = consultas.oDataReader["codCliente"].ToString();
             }
-            
+
             oDoc.DocDate = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
             oDoc.DocDueDate = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
 
@@ -349,7 +371,7 @@ namespace Servicio_Cast_Pedidos.Clases
                 origen = "INVENTIVA";
             }
             oDoc.UserFields.Fields.Item("U_DocOrigen").Value = origen;
-            
+
             if (!creditoOK)
             {
                 oDoc.UserFields.Fields.Item("U_LimiCrediVal").Value = "S";
@@ -439,13 +461,13 @@ namespace Servicio_Cast_Pedidos.Clases
             if (Respuesta != 0)
             {
                 oCompany.GetLastError(out Respuesta, out MsgErrSBO);
-                
+
                 CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante);
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                WriteErrorLog("CrearPedido:"+nroPedido+" Error: " + Respuesta +" " + MsgErrSBO);
+                WriteErrorLog("CrearPedido:" + nroPedido + " Error: " + Respuesta + " " + MsgErrSBO);
             }
             else
             {
@@ -455,7 +477,12 @@ namespace Servicio_Cast_Pedidos.Clases
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
             }
 
-            dbSap.LiberarObjeto(oRecordset);
+            if (!consultas.oDataReader.IsClosed)
+                consultas.oDataReader.Close();
+
+            consultas.oDataReader.Dispose();
+
+            LiberarObjeto(oRecordset);
         }
         
         public static void WriteErrorLog(string strErrorText)
@@ -490,12 +517,29 @@ namespace Servicio_Cast_Pedidos.Clases
             SAPbobsCOM.GeneralDataParams oGeneralParams = null;
             oGeneralParams = oGeneralService.Add(oGeneralData);
 
-            dbSap.LiberarObjeto(oCompanyService);
-            dbSap.LiberarObjeto(oGeneralData);
-            dbSap.LiberarObjeto(oGeneralService);
-            dbSap.LiberarObjeto(oGeneralParams);
+            LiberarObjeto(oCompanyService);
+            LiberarObjeto(oGeneralData);
+            LiberarObjeto(oGeneralService);
+            LiberarObjeto(oGeneralParams);
         }
-        
+
+        public void LiberarObjeto(Object oObject)
+        {
+            try
+            {
+                if (oObject != null)
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(oObject);
+
+                oObject = null;
+                GC.Collect();
+            }
+            catch (Exception)
+            {
+                oObject = null;
+                GC.Collect();
+            }
+        }
+
         #endregion
 
 
