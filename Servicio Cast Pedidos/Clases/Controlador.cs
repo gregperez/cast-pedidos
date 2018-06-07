@@ -58,7 +58,7 @@ namespace Servicio_Cast_Pedidos.Clases
                         tw.WriteLine(String.Format("monto_total: {0}", dbOracleCab.oDataReader["monto_total"].ToString()));
                         
                         dbOracleDet = new DBOracle(ServerOracle, UserOracle, PassOracle);
-                        if (dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante)))
+                        if (dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante, dbOracleCab.oDataReader["ser_comprobante"].ToString())))
                         {
                             while (dbOracleDet.oDataReader.Read())
                             {
@@ -135,8 +135,9 @@ namespace Servicio_Cast_Pedidos.Clases
 
                         error_comprobante = dbOracleCab.oDataReader["tip_comprobante"].ToString() + "-" + dbOracleCab.oDataReader["ser_comprobante"].ToString() + "-" + dbOracleCab.oDataReader["nro_comprobante"].ToString();
                         nro_comprobante = dbOracleCab.oDataReader["nro_comprobante"].ToString();
+                        string ser_comprobante = dbOracleCab.oDataReader["ser_comprobante"].ToString();
                         dbOracleDet = new DBOracle(ServerOracle, UserOracle, PassOracle);
-                        dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante));
+                        dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante, ser_comprobante));
 
                         oRecordset = (SAPbobsCOM.Recordset)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
 
@@ -171,7 +172,6 @@ namespace Servicio_Cast_Pedidos.Clases
             catch (Exception ex)
             {
                 CrearRegistroLog(ex.HResult.ToString(), ex.Message.ToString(), nro_comprobante);
-                WriteErrorLog("ProcesarPedidos:" + error_comprobante + " Mensaje:" + ex.Message.ToString());
             }
             finally
             {
@@ -388,7 +388,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             dbOracleDet = new DBOracle(ServerOracle, UserOracle, PassOracle);
             int i = 0;
-            if (dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante)))
+            if (dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante, dbOracleCab.oDataReader["ser_comprobante"].ToString())))
             {
                 while (dbOracleDet.oDataReader.Read())
                 {
@@ -467,7 +467,6 @@ namespace Servicio_Cast_Pedidos.Clases
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                WriteErrorLog("CrearPedido:" + nroPedido + " Error: " + Respuesta + " " + MsgErrSBO);
             }
             else
             {
@@ -483,20 +482,6 @@ namespace Servicio_Cast_Pedidos.Clases
             consultas.oDataReader.Dispose();
 
             LiberarObjeto(oRecordset);
-        }
-        
-        public static void WriteErrorLog(string strErrorText)
-        {
-            try
-            {
-                string strFileName = "errorLog.txt";
-                string strPath = System.Windows.Forms.Application.StartupPath;
-                System.IO.File.AppendAllText(strPath + "\\" + strFileName, strErrorText + " - " + DateTime.Now.ToString() + "\r\n");
-            }
-            catch (Exception ex)
-            {
-                WriteErrorLog("Error in WriteErrorLog: " + ex.Message);
-            }
         }
         
         private void CrearRegistroLog(string codError, string descError, string nroPed)

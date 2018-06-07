@@ -35,7 +35,7 @@ namespace Servicio_Cast_Pedidos.Clases
         /// 
         /// </summary>
         /// <returns></returns>
-        public static string GetPedidosDet(string valor)
+        public static string GetPedidosDet(string nro_comprobante, string ser_comprobante)
         {
             m_sSQL.Length = 0;
 
@@ -43,7 +43,8 @@ namespace Servicio_Cast_Pedidos.Clases
             m_sSQL.Append(" nvl(d1.cantidad, 0) \"cantidad\", nvl(d1.precio_unitario, 0) \"precio_unitario\", ");
             m_sSQL.Append(" nvl(d1.monto_total, 0) \"monto_total\", nvl(d1.total_iva, 0) \"total_iva\" ");
             m_sSQL.Append(" FROM gen_pedidos_det d1 ");
-            m_sSQL.AppendFormat(" WHERE d1.nro_comprobante = '{0}' ", valor.ToString());
+            m_sSQL.AppendFormat(" WHERE d1.nro_comprobante = '{0}' ", nro_comprobante.ToString());
+            m_sSQL.AppendFormat(" AND d1.ser_comprobante = '{0}' ", ser_comprobante.ToString());
             //m_sSQL.Append(" AND d1.procesado = 'N' ");
 
             return m_sSQL.ToString();
@@ -136,6 +137,7 @@ namespace Servicio_Cast_Pedidos.Clases
                 "FROM gen_pedidos_cab T0 ");
             m_sSQL.Append("JOIN gen_pedidos_det T1 ON T0.nro_comprobante = T1.nro_comprobante ");
             m_sSQL.Append(" WHERE T0.procesado = 'N' ");
+            //m_sSQL.Append(" WHERE T0.nro_comprobante = '51' ");
 
             return m_sSQL.ToString();
         }
