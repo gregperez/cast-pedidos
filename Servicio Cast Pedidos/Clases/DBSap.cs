@@ -116,13 +116,19 @@ namespace Servicio_Cast_Pedidos.Clases
             return ok;
         }
 
-        public void DesconectarSAP(SAPbobsCOM.Company company)
+        public void LiberarObjeto(Object oObject)
         {
-            if (company != null)
+            try
             {
-                company.Disconnect();
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(company);
-                company = null;
+                if (oObject != null)
+                    System.Runtime.InteropServices.Marshal.ReleaseComObject(oObject);
+
+                oObject = null;
+                GC.Collect();
+            }
+            catch (Exception)
+            {
+                oObject = null;
                 GC.Collect();
             }
         }

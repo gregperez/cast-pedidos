@@ -123,7 +123,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             try
             {
-                if (dbOracleCab.EjecutaSQL(ConsultasOracle.GetPedidosCab()))
+                if (dbOracleCab.EjecutaSQL(ConsultasOracle.ValidarPedidoCompleto()))
                 {
                     while (dbOracleCab.oDataReader.Read())
                     {
@@ -175,7 +175,9 @@ namespace Servicio_Cast_Pedidos.Clases
             }
             finally
             {
-                dbSap.DesconectarSAP(oCompany);
+                dbSap.LiberarObjeto(oDoc);
+                dbSap.LiberarObjeto(oRecordset);
+                dbSap.LiberarObjeto(oCompany);
             }
         }
 
@@ -212,6 +214,8 @@ namespace Servicio_Cast_Pedidos.Clases
                 if (Convert.ToDouble(oRecordset.Fields.Item("U_Saldo_disp").Value) > Convert.ToDouble(dbOracleCab.oDataReader["monto_total"].ToString()))
                     esValido = true;
             }
+
+            dbSap.LiberarObjeto(oRecordset);
 
             return esValido;
         }
@@ -253,6 +257,8 @@ namespace Servicio_Cast_Pedidos.Clases
                     }
                 }
             }
+
+            dbSap.LiberarObjeto(oRecordset);
 
             return esValido;
         }
@@ -447,8 +453,9 @@ namespace Servicio_Cast_Pedidos.Clases
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-
             }
+
+            dbSap.LiberarObjeto(oRecordset);
         }
         
         public static void WriteErrorLog(string strErrorText)
@@ -482,6 +489,11 @@ namespace Servicio_Cast_Pedidos.Clases
 
             SAPbobsCOM.GeneralDataParams oGeneralParams = null;
             oGeneralParams = oGeneralService.Add(oGeneralData);
+
+            dbSap.LiberarObjeto(oCompanyService);
+            dbSap.LiberarObjeto(oGeneralData);
+            dbSap.LiberarObjeto(oGeneralService);
+            dbSap.LiberarObjeto(oGeneralParams);
         }
         
         #endregion
