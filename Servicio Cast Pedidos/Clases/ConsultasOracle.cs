@@ -26,7 +26,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             m_sSQL.Append(" SELECT * FROM gen_pedidos_cab ");
             m_sSQL.Append(" WHERE procesado = 'N' ");
-            //m_sSQL.Append(" AND nro_comprobante = '207' ");
+            //m_sSQL.Append(" WHERE nro_comprobante = '16' ");
 
             return m_sSQL.ToString();
         }
@@ -39,9 +39,12 @@ namespace Servicio_Cast_Pedidos.Clases
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" SELECT * FROM gen_pedidos_det "); ;
-            m_sSQL.AppendFormat(" WHERE nro_comprobante = '{0}' ", valor.ToString());
-            m_sSQL.Append(" AND procesado != 'S' ");
+            m_sSQL.Append(" SELECT d1.nro_item \"nro_item\", d1.cod_articulo \"cod_articulo\", ");
+            m_sSQL.Append(" nvl(d1.cantidad, 0) \"cantidad\", nvl(d1.precio_unitario, 0) \"precio_unitario\", ");
+            m_sSQL.Append(" nvl(d1.monto_total, 0) \"monto_total\", nvl(d1.total_iva, 0) \"total_iva\" ");
+            m_sSQL.Append(" FROM gen_pedidos_det d1 ");
+            m_sSQL.AppendFormat(" WHERE d1.nro_comprobante = '{0}' ", valor.ToString());
+            //m_sSQL.Append(" AND d1.procesado = 'N' ");
 
             return m_sSQL.ToString();
         }
@@ -117,6 +120,23 @@ namespace Servicio_Cast_Pedidos.Clases
             m_sSQL.Append("SELECT DISTINCT COD_CLIENTE as \"codCliente\", NOMBRE_CLIENTE as \"nomCliente\" " +
                         "FROM CLIENTES c " +
                         "WHERE  c.COD_PERSONA_INV = '" + codPersona + "'AND COD_EMPRESA='"+ codEmpresa  + "' AND c.ESTADO='S'");
+            return m_sSQL.ToString();
+        }
+
+        public static string ValidarPedidoCompleto()
+        {
+            m_sSQL.Length = 0;
+
+            m_sSQL.Append("SELECT DISTINCT(T0.nro_comprobante),  T0.cod_empresa, T0.cod_sucursal, T0.tip_comprobante, " +
+                "T0.ser_comprobante, T0.nro_comprobante, T0.fec_comprobante, T0.cod_cliente, T0.cod_vendedor, " +
+                "T0.cod_condicion_venta, T0.cod_lista_precio, T0.cod_moneda, T0.tip_cambio, T0.estado, T0.cod_usuario, " +
+                "T0.comentario, T0.ruc, T0.dir_cliente, T0.tel_cliente, T0.cod_provincia, T0.cod_ciudad, T0.enviar_ypane, " +
+                "T0.wms_preparado, T0.wms_id_transaccion, T0.solo_credito, T0.monto_total, T0.procesado, T0.nro_pedido, " +
+                "T0.origen, T0.docentry, T0.typeobject, T0.tip_pedido, T0.preparo, T0.wms_preparo, T0.fec_hora_ingreso " +
+                "FROM gen_pedidos_cab T0 ");
+            m_sSQL.Append("JOIN gen_pedidos_det T1 ON T0.nro_comprobante = T1.nro_comprobante ");
+            m_sSQL.Append(" WHERE T0.procesado = 'N' ");
+
             return m_sSQL.ToString();
         }
 

@@ -42,13 +42,15 @@ namespace Servicio_Cast_Pedidos.Clases
             string strPathLog = @"C:\Users\Exxispydesa2\Desktop\Pedidos.txt";
             TextWriter tw = new StreamWriter(strPathLog, true);
 
+            string nro_comprobante = "";
+
             try
             {
                 if (dbOracleCab.EjecutaSQL(ConsultasOracle.GetPedidosCab()))
                 {
                     while (dbOracleCab.oDataReader.Read())
                     {
-                        string nro_comprobante = dbOracleCab.oDataReader["nro_comprobante"].ToString();
+                        nro_comprobante = dbOracleCab.oDataReader["nro_comprobante"].ToString();
                         tw.WriteLine(String.Format("cod_empresa: {0}", dbOracleCab.oDataReader["cod_empresa"].ToString()));
                         tw.WriteLine(String.Format("nro_comprobante: {0}", dbOracleCab.oDataReader["nro_comprobante"].ToString()));
                         tw.WriteLine(String.Format("fec_comprobante: {0}", dbOracleCab.oDataReader["fec_comprobante"].ToString()));
@@ -74,6 +76,7 @@ namespace Servicio_Cast_Pedidos.Clases
             catch (Exception ex)
             {
                 // Gestion de errores.
+                CrearRegistroLog(ex.HResult.ToString(), ex.Message.ToString(), nro_comprobante);
             }
         }
 
@@ -120,7 +123,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
             try
             {
-                if (dbOracleCab.EjecutaSQL(ConsultasOracle.GetPedidosCab()))
+                if (dbOracleCab.EjecutaSQL(ConsultasOracle.ValidarPedidoCompleto()))
                 {
                     while (dbOracleCab.oDataReader.Read())
                     {
@@ -136,11 +139,6 @@ namespace Servicio_Cast_Pedidos.Clases
                         dbOracleDet.EjecutaSQL(ConsultasOracle.GetPedidosDet(nro_comprobante));
 
                         oRecordset = (SAPbobsCOM.Recordset)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-                        //oRecordset.DoQuery(ConsultasSap.GetParametroValor("Almacen"));
-                        //if (oRecordset.RecordCount > 0)
-                        //{
-                        //    almacen = oRecordset.Fields.Item("ValParam").Value.ToString();
-                        //}
 
                         oRecordset.DoQuery(ConsultasSap.GetParametroValor("ListaPrecio"));
                         if (oRecordset.RecordCount > 0)
@@ -153,7 +151,7 @@ namespace Servicio_Cast_Pedidos.Clases
                             esPedido = false;
                             creditoOK = false;
                         }
-                        if (!ValidarStockDisponible(ref stockOK, ref precioOK, almacen, listaPrecio))
+                        if (!ValidarStockyPrecio(ref stockOK, ref precioOK, almacen, listaPrecio))
                         {
                             esPedido = false;
                         }
@@ -172,17 +170,20 @@ namespace Servicio_Cast_Pedidos.Clases
             }
             catch (Exception ex)
             {
-                DateTime fecha = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
-                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante, fecha.ToString("dd/MM/yyyy"));
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
-                //    System.Reflection.MethodBase.GetCurrentMethod().Name, ex.Message.ToString(), ex.StackTrace.ToString()));
+                CrearRegistroLog(ex.HResult.ToString(), ex.Message.ToString(), nro_comprobante);
                 WriteErrorLog("ProcesarPedidos:" + error_comprobante + " Mensaje:" + ex.Message.ToString());
+            }
+            finally
+            {
+                dbSap.LiberarObjeto(oDoc);
+                dbSap.LiberarObjeto(oRecordset);
+                dbSap.LiberarObjeto(oCompany);
             }
         }
 
         public bool ValidarCreditoDisponible(ref string almacen)
         {
-            bool esValido = true;
+            bool esValido = false;
             SAPbobsCOM.Recordset oRecordset = null;
             string cardCode = string.Empty;
             oRecordset = (SAPbobsCOM.Recordset)oCompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
@@ -207,25 +208,19 @@ namespace Servicio_Cast_Pedidos.Clases
                 almacen = consultas.oDataReader["codSucSAP"].ToString();
             }
 
-            //oRecordset.DoQuery(ConsultasSap.GetCardCode(dbOracleCab.oDataReader["ruc"].ToString()));
-            //if (oRecordset.RecordCount > 0)
-            //{
-            //    cardCode = oRecordset.Fields.Item("CardCode").Value.ToString();
-            //}
-            //oRecordset.DoQuery(ConsultasSap.GetLineaCredito(cardCode));
-
-
             oRecordset.DoQuery(ConsultasSap.GetLineaCreditoUDO(cardCode, empresaSAP));
             if (oRecordset.RecordCount > 0)
             {
-                if (Convert.ToDouble(dbOracleCab.oDataReader["monto_total"].ToString()) > Convert.ToDouble(oRecordset.Fields.Item("U_Linea_Cred").Value))
-                    esValido = false;
+                if (Convert.ToDouble(oRecordset.Fields.Item("U_Saldo_disp").Value) > Convert.ToDouble(dbOracleCab.oDataReader["monto_total"].ToString()))
+                    esValido = true;
             }
+
+            dbSap.LiberarObjeto(oRecordset);
 
             return esValido;
         }
 
-        public bool ValidarStockDisponible(ref bool stockOK, ref bool precioOK, string almacen,
+        public bool ValidarStockyPrecio(ref bool stockOK, ref bool precioOK, string almacen,
             int listaPrecio)
         {
             bool esValido = true;
@@ -234,7 +229,7 @@ namespace Servicio_Cast_Pedidos.Clases
             DBOracle detalleCopy = new DBOracle(ServerOracle, UserOracle, PassOracle);
             detalleCopy = dbOracleDet;
 
-            while (detalleCopy.oDataReader.Read() && stockOK && precioOK)
+            while (detalleCopy.oDataReader.Read())
             {
                 string cod_articulo = "";
                 double cantidad = 0;
@@ -249,7 +244,6 @@ namespace Servicio_Cast_Pedidos.Clases
                     {
                         stockOK = false;
                         esValido = false;
-                        break;
                     }
                 }
                     
@@ -260,10 +254,11 @@ namespace Servicio_Cast_Pedidos.Clases
                     {
                         precioOK = false;
                         esValido = false;
-                        break;
                     }
                 }
             }
+
+            dbSap.LiberarObjeto(oRecordset);
 
             return esValido;
         }
@@ -325,8 +320,10 @@ namespace Servicio_Cast_Pedidos.Clases
                 oDoc.DocCurrency = consultas.oDataReader["codMonedaSAP"].ToString();
             }
 
-
-            oDoc.DocRate = Convert.ToDouble(dbOracleCab.oDataReader["tip_cambio"].ToString());
+            if (!dbOracleCab.oDataReader["tip_cambio"].ToString().Equals(""))
+            {
+                oDoc.DocRate = Convert.ToDouble(dbOracleCab.oDataReader["tip_cambio"].ToString());
+            }
             //oDoc.DocumentStatus = SAPbobsCOM.BoStatus.bost_Open;// dbOracleCab.oDataReader["estado"].ToString();
             oDoc.Comments = dbOracleCab.oDataReader["comentario"].ToString();
             oDoc.FederalTaxID = dbOracleCab.oDataReader["ruc"].ToString();
@@ -343,7 +340,7 @@ namespace Servicio_Cast_Pedidos.Clases
             oDoc.UserFields.Fields.Item("U_wms_id_transaccion").Value = dbOracleCab.oDataReader["wms_id_transaccion"].ToString();
             oDoc.UserFields.Fields.Item("U_control").Value = dbOracleCab.oDataReader["solo_credito"].ToString();
             string origen = "";
-            if (dbOracleCab.oDataReader["ser_comprobante"].ToString().Equals("AA"))
+            if (dbOracleCab.oDataReader["origen"].ToString().Equals(""))
             {
                 origen = "CAST";
             }
@@ -352,14 +349,7 @@ namespace Servicio_Cast_Pedidos.Clases
                 origen = "INVENTIVA";
             }
             oDoc.UserFields.Fields.Item("U_DocOrigen").Value = origen;
-
-            //oRecordset.DoQuery(ConsultasSap.GetParametroValor("DocOrigen"));
-            //if (oRecordset.RecordCount > 0)
-            //{
-            //    oDoc.UserFields.Fields.Item("U_DocOrigen").Value = oRecordset.Fields.Item("ValParam").Value.ToString();
-            //}
-
-            //oDoc.UserFields.Fields.Item("U_procesado").Value = dbOracleCab.oDataReader["procesado"].ToString();
+            
             if (!creditoOK)
             {
                 oDoc.UserFields.Fields.Item("U_LimiCrediVal").Value = "S";
@@ -385,29 +375,56 @@ namespace Servicio_Cast_Pedidos.Clases
                     oDoc.Lines.UnitPrice = Convert.ToDouble(dbOracleDet.oDataReader["precio_unitario"].ToString());
                     oDoc.Lines.TaxCode = "IVA_10";
 
-                    if (!stockOK)
+                    if (!stockOK && !precioOK)
                     {
+                        double cantidad = 0;
+                        double precio = 0;
                         oRecordset.DoQuery(ConsultasSap.GetItemStock(oDoc.Lines.ItemCode, almacen));
                         if (oRecordset.RecordCount > 0)
                         {
                             if (oDoc.Lines.Quantity > Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()))
                             {
-                                oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value = 
-                                    String.Format("Cantidad solicitada ({0}) supera el stock disponible ({1}).",
-                                    oDoc.Lines.Quantity, Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()));
+                                cantidad = Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString());
                             }
                         }
-                    }
-                    if (!precioOK)
-                    {
                         oRecordset.DoQuery(ConsultasSap.GetPrecioLista(oDoc.Lines.ItemCode, listaPrecio));
                         if (oRecordset.RecordCount > 0)
                         {
                             if (oDoc.Lines.UnitPrice < Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()))
                             {
-                                oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
-                                    String.Format("Precio de venta ({0}) es menor al de la lista de precio predeterminada ({1}).",
-                                    oDoc.Lines.UnitPrice, Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()));
+                                precio = Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString());
+                            }
+                        }
+                        oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
+                            String.Format("Cantidad solicitada: {0}, disponible: {1}. Precio venta: {2}, lista: {3}.",
+                            oDoc.Lines.Quantity, cantidad, oDoc.Lines.UnitPrice, precio);
+                    }
+                    else
+                    {
+                        if (!stockOK)
+                        {
+                            oRecordset.DoQuery(ConsultasSap.GetItemStock(oDoc.Lines.ItemCode, almacen));
+                            if (oRecordset.RecordCount > 0)
+                            {
+                                if (oDoc.Lines.Quantity > Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()))
+                                {
+                                    oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
+                                        String.Format("Cantidad solicitada ({0}) supera el stock disponible ({1}).",
+                                        oDoc.Lines.Quantity, Convert.ToDouble(oRecordset.Fields.Item("Stock").Value.ToString()));
+                                }
+                            }
+                        }
+                        if (!precioOK)
+                        {
+                            oRecordset.DoQuery(ConsultasSap.GetPrecioLista(oDoc.Lines.ItemCode, listaPrecio));
+                            if (oRecordset.RecordCount > 0)
+                            {
+                                if (oDoc.Lines.UnitPrice < Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()))
+                                {
+                                    oDoc.Lines.UserFields.Fields.Item("U_MotivoOferta").Value =
+                                        String.Format("Precio de venta ({0}) es menor al de la lista de precio predeterminada ({1}).",
+                                        oDoc.Lines.UnitPrice, Convert.ToDouble(oRecordset.Fields.Item("Price").Value.ToString()));
+                                }
                             }
                         }
                     }
@@ -422,33 +439,23 @@ namespace Servicio_Cast_Pedidos.Clases
             if (Respuesta != 0)
             {
                 oCompany.GetLastError(out Respuesta, out MsgErrSBO);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("En el método {0}. Ocurrió el siguiente error: {1} - {2} ",
-                //    System.Reflection.MethodBase.GetCurrentMethod().Name, Respuesta, MsgErrSBO));
-
-                DateTime fecha = Convert.ToDateTime(dbOracleCab.oDataReader["fec_comprobante"].ToString());
-                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante, fecha.ToString("dd/MM/yyyy"));
+                
+                CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante);
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera Error: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle Error: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
                 WriteErrorLog("CrearPedido:"+nroPedido+" Error: " + Respuesta +" " + MsgErrSBO);
             }
             else
             {
                 identi = oCompany.GetNewObjectKey();
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Cabecera: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
                 filas = 0;
                 dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
-                //System.Diagnostics.EventLog.WriteEntry("Application", String.Format("Cantidad filas actualizadas Detalle: {0}, del documento {1} ",
-                //    filas, nro_comprobante));
-
             }
+
+            dbSap.LiberarObjeto(oRecordset);
         }
         
         public static void WriteErrorLog(string strErrorText)
@@ -465,7 +472,7 @@ namespace Servicio_Cast_Pedidos.Clases
             }
         }
         
-        private void CrearRegistroLog(string codError, string descError, string nroPed, string fecha)
+        private void CrearRegistroLog(string codError, string descError, string nroPed)
         {
             SAPbobsCOM.CompanyService oCompanyService = null;
             SAPbobsCOM.GeneralData oGeneralData = null;
@@ -478,10 +485,15 @@ namespace Servicio_Cast_Pedidos.Clases
             oGeneralData.SetProperty("U_EXX_CodError", codError);
             oGeneralData.SetProperty("U_EXX_DescError", descError);
             oGeneralData.SetProperty("U_EXX_NroPed", nroPed);
-            oGeneralData.SetProperty("U_EXX_Fecha", fecha);
+            oGeneralData.SetProperty("U_EXX_Fecha", String.Format("{0:G}", DateTime.Now.ToString()));
 
             SAPbobsCOM.GeneralDataParams oGeneralParams = null;
             oGeneralParams = oGeneralService.Add(oGeneralData);
+
+            dbSap.LiberarObjeto(oCompanyService);
+            dbSap.LiberarObjeto(oGeneralData);
+            dbSap.LiberarObjeto(oGeneralService);
+            dbSap.LiberarObjeto(oGeneralParams);
         }
         
         #endregion
