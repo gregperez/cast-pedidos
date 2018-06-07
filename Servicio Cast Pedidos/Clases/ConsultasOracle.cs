@@ -54,21 +54,21 @@ namespace Servicio_Cast_Pedidos.Clases
         /// 
         /// </summary>
         /// <returns></returns>
-        public static string UpdatePedidoCab(string valor)
+        public static string UpdatePedidoCab(string valor, string estado)
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" UPDATE gen_pedidos_cab SET procesado = 'S' ");
+            m_sSQL.Append(" UPDATE gen_pedidos_cab SET procesado = '" + estado + "' ");
             m_sSQL.AppendFormat(" WHERE nro_comprobante = '{0}'", valor.ToString());
 
             return m_sSQL.ToString();
         }
 
-        public static string UpdatePedidoDet(string valor)
+        public static string UpdatePedidoDet(string valor, string estado)
         {
             m_sSQL.Length = 0;
 
-            m_sSQL.Append(" UPDATE gen_pedidos_det SET procesado = 'S' ");
+            m_sSQL.Append(" UPDATE gen_pedidos_det SET procesado = '" + estado + "' ");
             m_sSQL.AppendFormat(" WHERE nro_comprobante = '{0}'", valor.ToString());
 
             return m_sSQL.ToString();

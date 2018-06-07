@@ -180,7 +180,7 @@ namespace Servicio_Cast_Pedidos.Clases
 
                 dbOracleCab.oDataReader.Dispose();
 
-                if (!dbOracleDet.oDataReader.IsClosed)
+                if ((dbOracleDet != null) && (!dbOracleDet.oDataReader.IsClosed))
                     dbOracleDet.oDataReader.Close();
 
                 dbOracleDet.oDataReader.Dispose();
@@ -464,16 +464,16 @@ namespace Servicio_Cast_Pedidos.Clases
 
                 CrearRegistroLog(Respuesta.ToString(), MsgErrSBO, nro_comprobante);
                 filas = 0;
-                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante, "E"), ref filas);
                 filas = 0;
-                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante, "E"), ref filas);
             }
             else
             {
                 identi = oCompany.GetNewObjectKey();
-                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante), ref filas);
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoCab(nro_comprobante, "S"), ref filas);
                 filas = 0;
-                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante), ref filas);
+                dbOracleUpdate.EjecutaSQL(ConsultasOracle.UpdatePedidoDet(nro_comprobante, "S"), ref filas);
             }
 
             if (!consultas.oDataReader.IsClosed)
