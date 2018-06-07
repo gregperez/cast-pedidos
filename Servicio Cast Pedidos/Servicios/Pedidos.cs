@@ -10,9 +10,9 @@ using System.ServiceProcess;
 using System.Text;
 using System.Timers;
 
-namespace Servicio_Cast_Pedidos.Servicios
+namespace Servicio_Cast_Pedidos
 {
-    partial class Pedidos : ServiceBase
+    public partial class Pedidos : ServiceBase
     {
         #region Atributos
 
@@ -38,6 +38,15 @@ namespace Servicio_Cast_Pedidos.Servicios
         {
             tmService = new Timer();
             tmService.Interval = GetNextIntervalo();
+            tmService.Elapsed += new ElapsedEventHandler(TimerElepased);
+            tmService.Enabled = true;
+            tmService.Start();
+        }
+
+        public void OnStartTest()
+        {
+            tmService = new Timer();
+            tmService.Interval = 10000;
             tmService.Elapsed += new ElapsedEventHandler(TimerElepased);
             tmService.Enabled = true;
             tmService.Start();

@@ -40,8 +40,9 @@
             // serviceInstaller1
             // 
             this.serviceInstaller1.Description = "Servicio para integración Cast-Sap Pedidos";
-            this.serviceInstaller1.DisplayName = "Exxis Cast Pedidos";
+            this.serviceInstaller1.DisplayName = "Integra Cast Pedidos";
             this.serviceInstaller1.ServiceName = "CastPedidos";
+            this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             // 
             // ProjectInstaller
             // 
